@@ -12,4 +12,5 @@ urlpatterns = [
     path('report/<slug>/', views.report, name='report-post'),
     path('unlike/<slug>/', views.unlike, name='unlike-post'),
     path('taglist/<slug>/', views.taglist, name='taglist'),
+    path('delete-comment/<int:comment_id>/', views.delete_comment, name='delete-comment'),
 ]

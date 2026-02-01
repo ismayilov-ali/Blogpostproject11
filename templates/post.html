@@ -24,18 +24,38 @@
                     {{ post.timestamp|date:"d F Y" }}
                 </p>
                 
-                <div class="report">
-                    <form method="POST" action="{% url 'report-post' post.slug %}">
-                        {% csrf_token %}
-                        {% if user.is_authenticated %}
-                            <button type="submit" class="flex items-center text-sm font-semibold transition-all duration-200 {% if has_reported %} text-red-600 {% else %} text-gray-400 hover:text-red-500 {% endif %}">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
-                                </svg>
-                                {% if has_reported %} Şikayət edilib {% else %} Şikayət et {% endif %}
-                            </button>
-                        {% endif %}
-                    </form>
+                <div class="flex items-center space-x-4">
+                    <!-- Oxunma sayı -->
+                    <div class="flex items-center text-gray-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        <span class="text-sm">{{ view_count }}</span>
+                    </div>
+                    
+                    <!-- Comment sayı 
+                    <div class="flex items-center text-gray-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                        </svg>
+                        <span class="text-sm">{{ comment_count }}</span>
+                    </div>
+                    -->
+                    <!-- Şikayət -->
+                    <div class="report">
+                        <form method="POST" action="{% url 'report-post' post.slug %}">
+                            {% csrf_token %}
+                            {% if user.is_authenticated %}
+                                <button type="submit" class="flex items-center text-sm font-semibold transition-all duration-200 {% if has_reported %} text-red-600 {% else %} text-gray-400 hover:text-red-500 {% endif %}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+                                    </svg>
+                                    {% if has_reported %} Şikayət edilib {% else %} Şikayət et {% endif %}
+                                </button>
+                            {% endif %}
+                        </form>
+                    </div>
                 </div>
 				<div class="mt-3 mb-4">
 							{% for tag in post.tags.all %}
@@ -89,6 +109,76 @@
                 </div>
             </div>
 
+            <!-- Comment Bölməsi 
+            <div class="mt-12 border-t border-gray-200 pt-8">
+                <h3 class="text-2xl font-bold text-gray-900 mb-6">
+                    Şərhlər ({{ comment_count }})
+                </h3>
+
+                {% if user.is_authenticated %}
+                <div class="mb-8 bg-white rounded-lg shadow-sm p-6">
+                    <form method="POST">
+                        {% csrf_token %}
+                        <textarea 
+                            name="comment_content" 
+                            rows="4" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" 
+                            placeholder="Şərhinizi yazın..."
+                            required
+                        ></textarea>
+                        <div class="flex justify-end mt-3">
+                            <button 
+                                type="submit" 
+                                name="comment_submit"
+                                class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg transition duration-200"
+                            >
+                                Göndər
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                {% else %}
+                <div class="mb-8 bg-blue-50 border-l-4 border-blue-500 p-4 text-sm text-blue-700">
+                    Şərh yazmaq üçün <a href="/admin/login/?next={{ request.path }}" class="font-bold underline">daxil olun</a>.
+                </div>
+                {% endif %}
+
+                <div class="space-y-6">
+                    {% for comment in comments %}
+                    <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition duration-200">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                                    {{ comment.user.username|first|upper }}
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-gray-900">{{ comment.user.username }}</p>
+                                    <p class="text-xs text-gray-500">{{ comment.timestamp|date:"d F Y, H:i" }}</p>
+                                </div>
+                            </div>
+                            {% if user.is_authenticated and user == comment.user or user.is_staff %}
+                            <a href="{% url 'delete-comment' comment.id %}" 
+                               class="text-red-500 hover:text-red-700 transition duration-200"
+                               onclick="return confirm('Şərhi silmək istədiyinizdən əminsiniz?')">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </a>
+                            {% endif %}
+                        </div>
+                        <p class="mt-3 text-gray-700 leading-relaxed">{{ comment.content }}</p>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-8 text-gray-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                        <p>Hələ ki şərh yoxdur. İlk şərhi siz yazın!</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            -->
         </div>
     </div>
 

@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.db.models import Q 
-from .models import Category, Post, Author, Like, Report, UnLike, Tag
+from .models import Category, Post, Author, Like, Report, UnLike, Tag, Comment, PostView
 
 def get_author(user):
     qs = Author.objects.filter(user=user)
@@ -23,6 +23,26 @@ def post (request,slug):
     post = Post.objects.get(slug = slug)
     latest = Post.objects.order_by('-timestamp')[:3]
     timestamp = Post.objects.get(slug=slug).timestamp
+    
+    # Hər yeniləmədə oxunma sayını artır
+    PostView.objects.create(post=post)
+    view_count = PostView.objects.filter(post=post).count()
+    
+    # Commentləri əldə et
+    comments = post.comments.all()
+    comment_count = comments.count()
+    
+    # Comment formu
+    if request.method == 'POST' and 'comment_submit' in request.POST:
+        if request.user.is_authenticated:
+            content = request.POST.get('comment_content')
+            if content:
+                Comment.objects.create(
+                    user=request.user,
+                    post=post,
+                    content=content
+                )
+                return redirect('post', slug=slug)
     
     has_liked = False
     like_count = 0
@@ -51,6 +71,9 @@ def post (request,slug):
         'unlike_count': unlike_count,
         'has_reported': has_reported,
         'timestamp': timestamp,
+        'view_count': view_count,
+        'comments': comments,
+        'comment_count': comment_count,
     }
     return render(request, 'post.html', context)
 
@@ -149,3 +172,19 @@ def taglist(request, slug):
         'tag': tag
     }
     return render(request, 'tag_list.html', context)
+
+def delete_comment(request, comment_id):
+    """Comment silmə funksiyası"""
+    if not request.user.is_authenticated:
+        return redirect('homepage')
+    
+    try:
+        comment = Comment.objects.get(id=comment_id)
+        if comment.user == request.user or request.user.is_staff:
+            post_slug = comment.post.slug
+            comment.delete()
+            return redirect('post', slug=post_slug)
+    except Comment.DoesNotExist:
+        pass
+    
+    return redirect('homepage')
