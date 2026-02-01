@@ -1,158 +1,110 @@
 {% extends 'base.html' %}
 {% load markdown_extras %}
+{% load static %}
+
 {% block content %}
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+    </style>
+</head>
+<body class="bg-gray-50 font-sans leading-normal tracking-normal">
 
-<body class="bg-gray-100 font-sans leading-normal tracking-normal"> 
+    <div id="progress"></div>
 
-	<!-- <nav id="header" class="fixed w-full z-10 top-0">
-
-		<div id="progress" class="h-1 z-20 top-0" style="background:linear-gradient(to right, #4dc0b5 var(--scroll), transparent 0);"></div>
-
-		<div class="w-full md:max-w-4xl mx-auto flex flex-wrap items-center justify-between mt-0 py-3">
-
-			<div class="pl-4">
-				<a class="text-gray-900 text-base no-underline hover:no-underline font-extrabold text-xl" href="#">
-					Minimal Blog
-				</a>
+    <div class="container w-full md:max-w-3xl mx-auto pt-10">
+        <div class="w-full px-4 md:px-6 text-xl text-gray-800 leading-normal" style="font-family:Georgia,serif;">
+            
+            <div class="flex justify-between items-center mb-6">
+                <p class="text-sm md:text-base font-normal text-gray-600">
+                    {{ post.timestamp|date:"d F Y" }}
+                </p>
+                
+                <div class="report">
+                    <form method="POST" action="{% url 'report-post' post.slug %}">
+                        {% csrf_token %}
+                        {% if user.is_authenticated %}
+                            <button type="submit" class="flex items-center text-sm font-semibold transition-all duration-200 {% if has_reported %} text-red-600 {% else %} text-gray-400 hover:text-red-500 {% endif %}">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+                                </svg>
+                                {% if has_reported %} Şikayət edilib {% else %} Şikayət et {% endif %}
+                            </button>
+                        {% endif %}
+                    </form>
+                </div>
+				<div class="mt-3 mb-4">
+							{% for tag in post.tags.all %}
+						<a href="{% url 'taglist' tag.slug %}" 
+					   class="inline-block bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full mr-2 mb-2 hover:bg-blue-200 transition duration-200">
+							#{{ tag.title }}
+						</a>
+					{% endfor %}
+				</div>
 			</div>
+            </div>
 
-			<div class="block lg:hidden pr-4">
-				<button id="nav-toggle" class="flex items-center px-3 py-2 border rounded text-gray-500 border-gray-600 hover:text-gray-900 hover:border-green-500 appearance-none focus:outline-none">
-					<svg class="fill-current h-3 w-3" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-						<title>Menu</title>
-						<path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z" />
-					</svg>
-				</button>
-			</div>
+            <div class="font-sans">
+                <h1 class="font-bold font-sans break-normal text-gray-900 pt-2 pb-6 text-3xl md:text-5xl">
+                    {{ post.title }}
+                </h1>
+                <img class="h-64 md:h-96 rounded-xl w-full object-cover object-center shadow-lg mb-10" src="{{ post.thumbnail.url }}" alt="{{ post.title }}">
+            </div>
 
-			<div class="w-full flex-grow lg:flex lg:items-center lg:w-auto hidden lg:block mt-2 lg:mt-0 bg-gray-100 md:bg-transparent z-20" id="nav-content">
-				<ul class="list-reset lg:flex justify-end flex-1 items-center">
-					<li class="mr-3">
-						<a class="inline-block py-2 px-4 text-gray-900 font-bold no-underline" href="#">Active</a>
-					</li>
-					<li class="mr-3">
-						<a class="inline-block text-gray-600 no-underline hover:text-gray-900 hover:text-underline py-2 px-4" href="#">link</a>
-					</li>
-					<li class="mr-3">
-						<a class="inline-block text-gray-600 no-underline hover:text-gray-900 hover:text-underline py-2 px-4" href="#">link</a>
-					</li>
-				</ul>
-			</div>
-		</div>
-	</nav> -->
+            <div class="py-6 prose prose-lg max-w-none text-gray-800">
+                {{ post.content | markdown | safe }}
+            </div>
 
-	<!--Container-->
-	<div class="container w-full md:max-w-3xl mx-auto pt-20">
+            <div class="flex items-center space-x-4 py-8 border-t border-b border-gray-200 my-10">
+                {% if user.is_authenticated %}
+                    <form method="POST" action="{% url 'like-post' post.slug %}">
+                        {% csrf_token %}
+                        <button type="submit" class="flex items-center transition-all duration-300 px-5 py-2 rounded-full font-medium {% if has_liked %} bg-blue-600 text-white shadow-md {% else %} bg-gray-100 text-gray-700 hover:bg-blue-100 {% endif %}">
+                            <span class="mr-2">👍</span> {{ like_count }}
+                        </button>
+                    </form>
+                    
+                    <form method="POST" action="{% url 'unlike-post' post.slug %}">
+                        {% csrf_token %}
+                        <button type="submit" class="flex items-center transition-all duration-300 px-5 py-2 rounded-full font-medium {% if has_unliked %} bg-red-600 text-white shadow-md {% else %} bg-gray-100 text-gray-700 hover:bg-red-100 {% endif %}">
+                            <span class="mr-2">👎</span> {{ unlike_count }}
+                        </button>
+                    </form>
+                {% else %}
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 w-full text-sm text-blue-700">
+                        Reaksiyalar üçün <a href="/admin/login/?next={{ request.path }}" class="font-bold underline">daxil olun</a>.
+                    </div>
+                {% endif %}
+            </div>
 
-		<div class="w-full px-4 md:px-6 text-xl text-gray-800 leading-normal" style="font-family:Georgia,serif;">
+            <div class="flex w-full items-center font-sans py-12">
+                <img class="w-16 h-16 rounded-full mr-4 border-2 border-indigo-500 p-0.5" src="{{ post.author.profile_picture.url }}" alt="{{ post.author }}">
+                <div class="flex-1">
+                    <p class="text-xs md:text-sm font-bold text-indigo-600 uppercase tracking-wide">Müəllif</p>
+                    <p class="text-xl font-bold text-gray-900 leading-none">{{ post.author }}</p>
+                </div>
+            </div>
 
-			<!--Title-->
-			<div class="font-sans">
-						<h1 class="font-bold font-sans break-normal text-gray-900 pt-6 pb-2 text-3xl md:text-4xl">
-						{{ post.title }}</h1>
-						<p class="text-sm md:text-base font-normal text-gray-600">
-						{{ obj.timestamp}}</p>
-						<img class="h-40 rounded w-full object-cover object-center mb-6" src="{{ post.thumbnail.url }}" alt="content">
-			</div>
+        </div>
+    </div>
 
+    <script>
+        var h = document.documentElement,
+            b = document.body,
+            st = 'scrollTop',
+            sh = 'scrollHeight',
+            progress = document.querySelector('#progress');
 
-			<!--Post Content-->
+        document.addEventListener('scroll', function() {
+            var scroll = (h[st] || b[st]) / ((h[sh] || b[sh]) - h.clientHeight) * 100;
+            progress.style.setProperty('--scroll', scroll + '%');
+        });
+    </script>
 
-			<div class="py-6">
-			{{ post.content | markdown | safe }}
-			</div>
-
-
-		
-
-		
-
-			<ol>
-				<li class="py-3">Maecenas accumsan lacus sit amet elementum porta. Aliquam eu libero lectus. Fusce vehicula dictum mi. In non dolor at sem ullamcorper venenatis ut sed dui. Ut ut est quam. Suspendisse quam quam, commodo sit amet placerat in, interdum a ipsum. Morbi sit amet tellus scelerisque tortor semper posuere.</li>
-				<li class="py-3">Morbi varius posuere blandit. Praesent gravida bibendum neque eget commodo. Duis auctor ornare mauris, eu accumsan odio viverra in. Proin sagittis maximus pharetra. Nullam lorem mauris, faucibus ut odio tempus, ultrices aliquet ex. Nam id quam eget ipsum luctus hendrerit. Ut eros magna, eleifend ac ornare vulputate, pretium nec felis.</li>
-				<li class="py-3">Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Nunc vitae pretium elit. Cras leo mauris, tristique in risus ac, tristique rutrum velit. Mauris accumsan tempor felis vitae gravida. Cras egestas convallis malesuada. Etiam ac ante id tortor vulputate pretium. Maecenas vel sapien suscipit, elementum odio et, consequat tellus.</li>
-			</ol>
-
-	
-
-
-			<!--/ Post Content-->
-
-		</div>
-
-		
-
-		<!--Divider-->
-		<hr class="border-b-2 border-gray-400 mb-8 mx-4">
-
-
-
-		<!--Author-->
-		<div class="flex w-full items-center font-sans px-4 py-12">
-			<img class="w-10 h-10 rounded-full mr-4" src="{{ post.author.profile_picture.url }}">
-			<div class="flex-1 px-2">
-				<p class="text-base font-bold text-base md:text-xl leading-none mb-2">
-				{{ post.author }}</p>
-		
-			</div>
-			
-		</div>
-		<!--/Author-->
-
-		<!--Divider-->
-		<hr class="border-b-2 border-gray-400 mb-8 mx-4">
-
-	
-
-	</div>
-	<!--/container-->
-
-	
-
-	<script>
-		/* Progress bar */
-		//Source: https://alligator.io/js/progress-bar-javascript-css-variables/
-		var h = document.documentElement,
-			b = document.body,
-			st = 'scrollTop',
-			sh = 'scrollHeight',
-			progress = document.querySelector('#progress'),
-			scroll;
-		var scrollpos = window.scrollY;
-		var header = document.getElementById("header");
-		var navcontent = document.getElementById("nav-content");
-
-		document.addEventListener('scroll', function() {
-
-			/*Refresh scroll % width*/
-			scroll = (h[st] || b[st]) / ((h[sh] || b[sh]) - h.clientHeight) * 100;
-			progress.style.setProperty('--scroll', scroll + '%');
-
-			/*Apply classes for slide in bar*/
-			scrollpos = window.scrollY;
-
-			if (scrollpos > 10) {
-				header.classList.add("bg-white");
-				header.classList.add("shadow");
-				navcontent.classList.remove("bg-gray-100");
-				navcontent.classList.add("bg-white");
-			} else {
-				header.classList.remove("bg-white");
-				header.classList.remove("shadow");
-				navcontent.classList.remove("bg-white");
-				navcontent.classList.add("bg-gray-100");
-
-			}
-
-		});
-
-
-		//Javascript to toggle the menu
-		document.getElementById('nav-toggle').onclick = function() {
-			document.getElementById("nav-content").classList.toggle("hidden");
-		}
-	</script>
-
-<!-- </body> -->
-
+</body>
+</html>
 {% endblock content %}

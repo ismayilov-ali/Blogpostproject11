@@ -1,6 +1,6 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.db.models import Q 
-from .models import Category, Post, Author
+from .models import Category, Post, Author, Like, Report, UnLike, Tag
 
 def get_author(user):
     qs = Author.objects.filter(user=user)
@@ -22,11 +22,71 @@ def homepage (request):
 def post (request,slug):
     post = Post.objects.get(slug = slug)
     latest = Post.objects.order_by('-timestamp')[:3]
+    timestamp = Post.objects.get(slug=slug).timestamp
+    
+    has_liked = False
+    like_count = 0
+    has_unliked = False
+    unlike_count = 0
+    has_reported = False
+    
+    if request.user.is_authenticated:
+        has_liked = Like.objects.filter(user=request.user, post=post).exists()
+        
+    if request.user.is_authenticated:
+        has_unliked = UnLike.objects.filter(user=request.user, post=post).exists()
+        
+    if request.user.is_authenticated:
+        has_reported = Report.objects.filter(user=request.user, post=post).exists()
+    
+    like_count = Like.objects.filter(post=post).count()
+    unlike_count = UnLike.objects.filter(post=post).count()
+    
     context = {
         'post': post,
         'latest': latest,
+        'has_liked': has_liked,
+        'like_count': like_count,
+        'has_unliked': has_unliked,
+        'unlike_count': unlike_count,
+        'has_reported': has_reported,
+        'timestamp': timestamp,
     }
     return render(request, 'post.html', context)
+
+def like(request,slug):
+    if not request.user.is_authenticated:
+        return render(request, 'post', slug=slug)
+    
+    if request.method == "POST":
+        user = request.user
+        post = Post.objects.get(slug=slug)
+        
+        like_qs = Like.objects.filter(user=user, post=post)
+        
+        if like_qs.exists():
+            like_qs.delete()
+        else:
+            Like.objects.create(user=user, post=post)
+    
+    return redirect('post', slug=slug)
+
+def unlike(request,slug):
+    if not request.user.is_authenticated:
+        return render(request, 'post', slug=slug)
+    
+    if request.method == "POST":
+        user = request.user
+        post = Post.objects.get(slug=slug)
+        
+        unlike_qs = UnLike.objects.filter(user=user, post=post)
+        
+        if unlike_qs.exists():
+            unlike_qs.delete()
+        else:
+            UnLike.objects.create(user=user, post=post)
+    
+    return redirect('post', slug=slug)
 
 def about (request):
     return render(request, 'about_page.html')
@@ -62,3 +122,30 @@ def allposts(request):
         'posts': posts,
     }
     return render(request, 'all_posts.html', context)
+
+def report(request,slug):
+    if not request.user.is_authenticated:
+        return render(request, 'post', slug=slug)
+    
+    if request.method == 'POST':
+        user = request.user
+        post = Post.objects.get(slug=slug)
+        
+        report_qs = Report.objects.filter(user=user, post=post)
+        
+        if report_qs.exists():
+            report_qs.delete()
+        else:
+            Report.objects.create(user=user, post=post)
+            
+    return redirect('post', slug=slug)
+    
+def taglist(request, slug):
+    tag = Tag.objects.get(slug=slug)
+    posts = Post.objects.filter(tags__in=[tag])
+    
+    context = {
+        'posts': posts,
+        'tag': tag
+    }
+    return render(request, 'tag_list.html', context)

@@ -19,7 +19,13 @@ class Category(models.Model):
     def __str__(self):
         return self.title
 
-
+class Tag(models.Model):
+    title = models.CharField(max_length=20)
+    slug = models.SlugField(unique=True)
+    
+    def __str__(self):
+        return self.title
+    
 class Post(models.Model):
     title = models.CharField(max_length=100)
     slug = models.SlugField()
@@ -30,8 +36,28 @@ class Post(models.Model):
     thumbnail = models.ImageField()
     categories = models.ManyToManyField(Category)
     featured = models.BooleanField()
+    tags = models.ManyToManyField(Tag, blank=True, related_name='posts')  # DÜZƏLDILDI: tag -> tags
 
     def __str__(self):
         return self.title
+    
+class Like(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    
+    def __str__(self):
+        return self.user.username
 
-
+class Report(models.Model):
+    user = models.ForeignKey(User,on_delete=models.CASCADE)
+    post = models.ForeignKey(Post,on_delete=models.CASCADE)
+    
+    def __str__(self):
+        return self.user.username
+    
+class UnLike(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    
+    def __str__(self):
+        return self.user.username
